@@ -141,7 +141,7 @@ ACCELRATE_100               = const(0x05)  # 100 Hz
 ACCELRATE_200               = const(0x06)  # 200 Hz
 ACCELRATE_400               = const(0x07)  # 400 Hz
 ACCELRATE_1620              = const(0x08)  # 1620 Hz
-ACCELRATE_1344              = const(0x09)  # 1344/5376 Hzp
+ACCELRATE_1344              = const(0x09)  # 1344/5376 Hz
 
 # Conversion constants
 _LSM303ACCEL_MG_LSB        = 16704.0

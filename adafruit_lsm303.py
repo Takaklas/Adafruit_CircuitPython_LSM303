@@ -129,6 +129,20 @@ MAGRATE_30                 = const(0x05)  # 30 Hz
 MAGRATE_75                 = const(0x06)  # 75 Hz
 MAGRATE_220                = const(0x07)  # 200 Hz
 
+# Accelerometer rates
+# Warning: Accelerometer rates over 400Hz are not fully
+# supported by the raspberry and correspond to read
+# rates of about 400-600hz (i2c read speed?)
+ACCELRATE_1                 = const(0x01)  # 1 Hz
+ACCELRATE_10                = const(0x02)  # 10 Hz
+ACCELRATE_25                = const(0x03)  # 25 Hz
+ACCELRATE_50                = const(0x04)  # 50 Hz
+ACCELRATE_100               = const(0x05)  # 100 Hz
+ACCELRATE_200               = const(0x06)  # 200 Hz
+ACCELRATE_400               = const(0x07)  # 400 Hz
+ACCELRATE_1620              = const(0x08)  # 1620 Hz
+ACCELRATE_1344              = const(0x09)  # 1344/5376 Hzp
+
 # Conversion constants
 _LSM303ACCEL_MG_LSB        = 16704.0
 _GRAVITY_STANDARD          = 9.80665      # Earth's gravity in m/s^2
@@ -153,6 +167,7 @@ class LSM303(object):
         self._lsm303mag_gauss_lsb_z = 980.0
         self._mag_gain = MAGGAIN_1_3
         self._mag_rate = MAGRATE_0_7
+        self._accel_rate = ACCELRATE_10
 
     @property
     def raw_acceleration(self):
@@ -236,6 +251,20 @@ class LSM303(object):
         self._mag_rate = value
         reg_m = ((value & 0x07) << 2) & 0xFF
         self._write_u8(self._mag_device, _REG_MAG_CRA_REG_M, reg_m)
+
+    @property
+    def accel_rate(self):
+        """The accelerometer update rate."""
+        return self._accel_rate
+
+    @accel_rate.setter
+    def accel_rate(self, value):
+        assert value in (ACCELRATE_1, ACCELRATE_10, ACCELRATE_25, ACCELRATE_50, ACCELRATE_100,  ACCELRATE_200, ACCELRATE_400, ACCELRATE_1620, ACCELRATE_1344)
+
+        self._accel_rate = value
+        reg_a = ((value & 0x0F) << 4) & 0xFF
+        reg_a += 0x07
+        self._write_u8(self._accel_device, _REG_ACCEL_CTRL_REG1_A, reg_a)
 
     def _read_u8(self, device, address):
         with device as i2c:

@@ -259,11 +259,17 @@ class LSM303(object):
 
     @accel_rate.setter
     def accel_rate(self, value):
-        assert value in (ACCELRATE_1, ACCELRATE_10, ACCELRATE_25, ACCELRATE_50, ACCELRATE_100,  ACCELRATE_200, ACCELRATE_400, ACCELRATE_1620, ACCELRATE_1344)
+        #assert value in (ACCELRATE_1, ACCELRATE_10, ACCELRATE_25, ACCELRATE_50, ACCELRATE_100,
+        #                 ACCELRATE_200, ACCELRATE_400, ACCELRATE_1620, ACCELRATE_1344)
+        valid_values = (ACCELRATE_1, ACCELRATE_10, ACCELRATE_25, ACCELRATE_50, ACCELRATE_100,
+                        ACCELRATE_200, ACCELRATE_400, ACCELRATE_1620, ACCELRATE_1344)
+        if value not in valid_values:
+            raise ValueError("Provided rate invalid. Must be one of the following: {}"
+                             .format(valid_values))
 
         self._accel_rate = value
         reg_a = ((value & 0x0F) << 4) & 0xFF
-        reg_a += 0x07
+        reg_a = (reg_a | 0x07) & 0xFF
         self._write_u8(self._accel_device, _REG_ACCEL_CTRL_REG1_A, reg_a)
 
     def _read_u8(self, device, address):

@@ -166,7 +166,7 @@ class LSM303(object):
         self._lsm303mag_gauss_lsb_xy = 1100.0
         self._lsm303mag_gauss_lsb_z = 980.0
         self._mag_gain = MAGGAIN_1_3
-        self._mag_rate = MAGRATE_0_7
+        self._mag_rate = MAGRATE_15
         self._accel_rate = ACCELRATE_10
 
     @property

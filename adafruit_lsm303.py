@@ -127,21 +127,27 @@ MAGRATE_7_5                = const(0x03)  # 7.5 Hz
 MAGRATE_15                 = const(0x04)  # 15 Hz
 MAGRATE_30                 = const(0x05)  # 30 Hz
 MAGRATE_75                 = const(0x06)  # 75 Hz
-MAGRATE_220                = const(0x07)  # 200 Hz
+MAGRATE_220                = const(0x07)  # 220 Hz
+
+# Accelerometer gains
+ACCELGAIN_2                = const(0x00)  # +/- 2G
+ACCELGAIN_4                = const(0x01)  # +/- 4G
+ACCELGAIN_8                = const(0x02)  # +/- 8G
+ACCELGAIN_16               = const(0x03)  # +/- 16G
 
 # Accelerometer rates
 # Warning: Accelerometer rates over 400Hz are not fully
 # supported by the raspberry and correspond to read
 # rates of about 400-600hz (i2c read speed?)
-ACCELRATE_1                 = const(0x01)  # 1 Hz
-ACCELRATE_10                = const(0x02)  # 10 Hz
-ACCELRATE_25                = const(0x03)  # 25 Hz
-ACCELRATE_50                = const(0x04)  # 50 Hz
-ACCELRATE_100               = const(0x05)  # 100 Hz
-ACCELRATE_200               = const(0x06)  # 200 Hz
-ACCELRATE_400               = const(0x07)  # 400 Hz
-ACCELRATE_1620              = const(0x08)  # 1620 Hz
-ACCELRATE_1344              = const(0x09)  # 1344/5376 Hz
+ACCELRATE_1                = const(0x01)  # 1 Hz
+ACCELRATE_10               = const(0x02)  # 10 Hz
+ACCELRATE_25               = const(0x03)  # 25 Hz
+ACCELRATE_50               = const(0x04)  # 50 Hz
+ACCELRATE_100              = const(0x05)  # 100 Hz
+ACCELRATE_200              = const(0x06)  # 200 Hz
+ACCELRATE_400              = const(0x07)  # 400 Hz
+ACCELRATE_1620             = const(0x08)  # 1620 Hz
+ACCELRATE_1344             = const(0x09)  # 1344/5376 Hz
 
 # Conversion constants
 _LSM303ACCEL_MG_LSB        = 16704.0
@@ -165,8 +171,10 @@ class LSM303(object):
         self._write_u8(self._mag_device, _REG_MAG_MR_REG_M, 0x00)  # Enable the magnetometer
         self._lsm303mag_gauss_lsb_xy = 1100.0
         self._lsm303mag_gauss_lsb_z = 980.0
+        self._lsm303accel_mg_per_lsb = 1.0
         self._mag_gain = MAGGAIN_1_3
         self._mag_rate = MAGRATE_15
+        self._accel_gain = ACCELGAIN_2
         self._accel_rate = ACCELRATE_10
 
     @property
@@ -183,7 +191,8 @@ class LSM303(object):
         A 3-tuple of X, Y, Z axis values in meters per second squared that are signed floats.
         """
         raw_accel_data = self.raw_acceleration
-        return tuple([n / _LSM303ACCEL_MG_LSB * _GRAVITY_STANDARD for n in raw_accel_data])
+        return tuple([n * self._lsm303accel_mg_per_lsb / _LSM303ACCEL_MG_LSB * _GRAVITY_STANDARD
+                      for n in raw_accel_data])
 
     @property
     def raw_magnetic(self):
@@ -251,6 +260,32 @@ class LSM303(object):
         self._mag_rate = value
         reg_m = ((value & 0x07) << 2) & 0xFF
         self._write_u8(self._mag_device, _REG_MAG_CRA_REG_M, reg_m)
+
+    @property
+    def accel_gain(self):
+        """The accelerometer's gain."""
+        return self._accel_gain
+
+    @accel_gain.setter
+    def accel_gain(self, value):
+        #assert value in (ACCELGAIN_2, ACCELGAIN_4, ACCELGAIN_8, ACCELGAIN_16)
+        valid_values = (ACCELGAIN_2, ACCELGAIN_4, ACCELGAIN_8, ACCELGAIN_16)
+        if value not in valid_values:
+            raise ValueError("Provided gain invalid. Must be one of the following: {}"
+                             .format(valid_values))
+
+        self._accel_gain = value
+        reg_a = ((value & 0x0F) << 4) & 0xFF
+        #reg_a = (0x80 + reg_a) & 0xFF
+        self._write_u8(self._accel_device, _REG_ACCEL_CTRL_REG4_A, reg_a)
+        if self._accel_gain == ACCELGAIN_2:
+            self._lsm303accel_mg_per_lsb = 1.0
+        elif self._accel_gain == ACCELGAIN_4:
+            self._lsm303accel_mg_per_lsb = 2.0
+        elif self._accel_gain == ACCELGAIN_8:
+            self._lsm303accel_mg_per_lsb = 4.0
+        elif self._accel_gain == ACCELGAIN_16:
+            self._lsm303accel_mg_per_lsb = 12.0
 
     @property
     def accel_rate(self):

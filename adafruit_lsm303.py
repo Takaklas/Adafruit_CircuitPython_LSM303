@@ -129,11 +129,11 @@ MAGRATE_30                 = const(0x05)  # 30 Hz
 MAGRATE_75                 = const(0x06)  # 75 Hz
 MAGRATE_220                = const(0x07)  # 220 Hz
 
-# Accelerometer gains
-ACCELGAIN_2                = const(0x00)  # +/- 2G
-ACCELGAIN_4                = const(0x01)  # +/- 4G
-ACCELGAIN_8                = const(0x02)  # +/- 8G
-ACCELGAIN_16               = const(0x03)  # +/- 16G
+# Accelerometer ranges
+ACCELRANGE_2                = const(0x00)  # +/- 2G
+ACCELRANGE_4                = const(0x01)  # +/- 4G
+ACCELRANGE_8                = const(0x02)  # +/- 8G
+ACCELRANGE_16               = const(0x03)  # +/- 16G
 
 # Accelerometer rates
 # Warning: Accelerometer rates over 400Hz are not fully
@@ -174,7 +174,7 @@ class LSM303(object):
         self._lsm303accel_mg_per_lsb = 1.0
         self._mag_gain = MAGGAIN_1_3
         self._mag_rate = MAGRATE_15
-        self._accel_gain = ACCELGAIN_2
+        self._accel_range = ACCELRANGE_2
         self._accel_rate = ACCELRATE_10
 
     @property
@@ -262,29 +262,28 @@ class LSM303(object):
         self._write_u8(self._mag_device, _REG_MAG_CRA_REG_M, reg_m)
 
     @property
-    def accel_gain(self):
-        """The accelerometer's gain."""
-        return self._accel_gain
+    def accel_range(self):
+        """The accelerometer's range."""
+        return self._accel_range
 
-    @accel_gain.setter
-    def accel_gain(self, value):
-        #assert value in (ACCELGAIN_2, ACCELGAIN_4, ACCELGAIN_8, ACCELGAIN_16)
-        valid_values = (ACCELGAIN_2, ACCELGAIN_4, ACCELGAIN_8, ACCELGAIN_16)
+    @accel_range.setter
+    def accel_range(self, value):
+        valid_values = (ACCELRANGE_2, ACCELRANGE_4, ACCELRANGE_8, ACCELRANGE_16)
         if value not in valid_values:
-            raise ValueError("Provided gain invalid. Must be one of the following: {}"
+            raise ValueError("Provided range invalid. Must be one of the following: {}"
                              .format(valid_values))
 
-        self._accel_gain = value
+        self._accel_range = value
         reg_a = ((value & 0x0F) << 4) & 0xFF
         #reg_a = (0x80 + reg_a) & 0xFF
         self._write_u8(self._accel_device, _REG_ACCEL_CTRL_REG4_A, reg_a)
-        if self._accel_gain == ACCELGAIN_2:
+        if self._accel_range == ACCELRANGE_2:
             self._lsm303accel_mg_per_lsb = 1.0
-        elif self._accel_gain == ACCELGAIN_4:
+        elif self._accel_range == ACCELRANGE_4:
             self._lsm303accel_mg_per_lsb = 2.0
-        elif self._accel_gain == ACCELGAIN_8:
+        elif self._accel_range == ACCELRANGE_8:
             self._lsm303accel_mg_per_lsb = 4.0
-        elif self._accel_gain == ACCELGAIN_16:
+        elif self._accel_range == ACCELRANGE_16:
             self._lsm303accel_mg_per_lsb = 12.0
 
     @property
@@ -294,8 +293,6 @@ class LSM303(object):
 
     @accel_rate.setter
     def accel_rate(self, value):
-        #assert value in (ACCELRATE_1, ACCELRATE_10, ACCELRATE_25, ACCELRATE_50, ACCELRATE_100,
-        #                 ACCELRATE_200, ACCELRATE_400, ACCELRATE_1620, ACCELRATE_1344)
         valid_values = (ACCELRATE_1, ACCELRATE_10, ACCELRATE_25, ACCELRATE_50, ACCELRATE_100,
                         ACCELRATE_200, ACCELRATE_400, ACCELRATE_1620, ACCELRATE_1344)
         if value not in valid_values:
